@@ -43,9 +43,10 @@ def main():
             torch.cuda.synchronize()
         times.append(time.perf_counter() - t0)
 
-    dt  = min(times)
+    dt  = float(np.mean(times))
+    std = float(np.std(times))
     rtf = duration / dt if dt > 0 else float('inf')
-    print(f"audio_s={duration:.2f}  time_s={dt:.4f}  RTF={rtf:.2f}x  text={text!r}")
+    print(f"audio_s={duration:.2f}  time_s={dt:.4f}  std={std:.4f}  RTF={rtf:.2f}x  text={text!r}")
 
 
 if __name__ == '__main__':

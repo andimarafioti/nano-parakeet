@@ -60,12 +60,19 @@ RTF > 1.0 = faster than real-time. 5 timed runs after a warm-up; best time repor
 
 | GPU | Audio | NeMo RTF | nano-parakeet RTF | Speedup |
 |---|---|---|---|---|
+| RTX 4090 | 12s | ~207× | ~519× | **2.5×** |
 | Jetson AGX Orin 64GB | 12s | ~73× | ~92× | **1.3×** |
+
+> **Note (RTX 4090):** NeMo is run with `strategy='greedy'` (single-item, not batch).
+> The default `greedy_batch` strategy uses TDT label-looping CUDA graphs that fail to compile
+> on NeMo 2.6.2 + cuda-python 12.9 (NVRTC is not permitted inside a graph capture context).
+> `strategy='greedy'` uses a different CUDA graph path that works fine.
 
 ### Cold start (first inference, including framework load)
 
 | GPU | NeMo | nano-parakeet |
 |---|---|---|
+| RTX 4090 | ~30s | **~3s** |
 | Jetson AGX Orin 64GB | ~30s | **~3s** |
 
 Run both yourself:

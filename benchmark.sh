@@ -59,20 +59,30 @@ def parse(text, key):
 nemo = open(nemo_file).read()
 pt   = open(pt_file).read()
 
-nr  = parse(nemo, 'RTF')
-pr  = parse(pt,   'RTF')
-nt  = parse(nemo, 'time_s')
-pt_ = parse(pt,   'time_s')
-a   = parse(nemo, 'audio_s') or parse(pt, 'audio_s')
-sp  = pr / nr if (nr and pr) else None
+nr   = parse(nemo, 'RTF')
+pr   = parse(pt,   'RTF')
+nt   = parse(nemo, 'time_s')
+pt_  = parse(pt,   'time_s')
+nstd = parse(nemo, 'std')
+pstd = parse(pt,   'std')
+a    = parse(nemo, 'audio_s') or parse(pt, 'audio_s')
+sp   = pr / nr if (nr and pr) else None
 
 def fmt(v, fmt_spec, suffix=''):
     return f'{v:{fmt_spec}}{suffix}' if v is not None else 'N/A'
 
+def fmt_time(mean, std):
+    if mean is None:
+        return 'N/A'.rjust(14)
+    s = f'{mean:.4f}s'
+    if std is not None:
+        s += f' ±{std:.4f}'
+    return s.rjust(20)
+
 print(f"=== Results: {gpu} ===")
-print(f"{'':20} {'NeMo':>14} {'nano-parakeet':>14} {'Speedup':>9}")
-print(f"{'─'*59}")
-print(f"{'RTF':20} {fmt(nr,'>13.1f','x')} {fmt(pr,'>13.1f','x')} {fmt(sp,'>8.1f','x')}")
-print(f"{'Inference time':20} {fmt(nt,'>13.2f','s')} {fmt(pt_,'>13.4f','s')}")
-print(f"{'Audio duration':20} {fmt(a,'>13.1f','s')}")
+print(f"{'':20} {'NeMo':>20} {'nano-parakeet':>20} {'Speedup':>9}")
+print(f"{'─'*71}")
+print(f"{'RTF':20} {fmt(nr,'>19.1f','x')} {fmt(pr,'>19.1f','x')} {fmt(sp,'>8.1f','x')}")
+print(f"{'Inference time':20} {fmt_time(nt,nstd)} {fmt_time(pt_,pstd)}")
+print(f"{'Audio duration':20} {fmt(a,'>19.1f','s')}")
 PYEOF

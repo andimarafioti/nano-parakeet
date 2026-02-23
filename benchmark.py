@@ -58,26 +58,17 @@ def main():
     model = model.cuda()
     model.eval()
 
+    # greedy_batch with TDT label-looping CUDA graphs fails on cuda-python 12.9
+    # (NVRTC compilation not allowed inside graph capture context).
+    # strategy='greedy' uses a different CUDA graph path that works fine.
+    model.change_decoding_strategy(decoding_cfg={'strategy': 'greedy'})
+
     def do_transcribe(wav_path, audio):
-        """Try NeMo calling conventions in order until one works."""
-        attempts = [
-            lambda: model.transcribe([audio], batch_size=1, verbose=False),  # NeMo 1.x numpy
-            lambda: model.transcribe([wav_path], batch_size=1),              # NeMo 2.x path
-            lambda: model.transcribe([wav_path]),                             # NeMo 2.x minimal
-            lambda: model.transcribe([wav_path], batch_size=1, verbose=False),
-        ]
-        for fn in attempts:
-            try:
-                out = fn()
-                if isinstance(out, tuple):
-                    out = out[0]
-                result = out[0]
-                if isinstance(result, list):
-                    result = result[0]
-                return (result.text if hasattr(result, 'text') else str(result)).strip()
-            except Exception:
-                continue
-        raise RuntimeError("All NeMo transcribe calling conventions failed")
+        out = model.transcribe([wav_path], batch_size=1)
+        if isinstance(out, tuple):
+            out = out[0]
+        result = out[0]
+        return (result.text if hasattr(result, 'text') else str(result)).strip()
 
     print("Warming up…")
     try:
@@ -94,9 +85,10 @@ def main():
         torch.cuda.synchronize()
         times.append(time.perf_counter() - t0)
 
-    dt = min(times)
+    dt  = float(np.mean(times))
+    std = float(np.std(times))
     rtf = duration / dt if dt > 0 else 0
-    print(f"audio_s={duration:.2f}  time_s={dt:.4f}  RTF={rtf:.2f}  text={text!r}")
+    print(f"audio_s={duration:.2f}  time_s={dt:.4f}  std={std:.4f}  RTF={rtf:.2f}  text={text!r}")
 
 
 if __name__ == '__main__':
