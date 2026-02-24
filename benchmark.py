@@ -54,14 +54,14 @@ def main():
 
     import nemo.collections.asr as nemo_asr
 
-    model = nemo_asr.models.EncDecRNNTBPEModel.from_pretrained(model_name=args.model)
+    model = nemo_asr.models.EncDecRNNTBPEModel.from_pretrained(model_name=args.model).to(torch.bfloat16)
     model = model.cuda()
     model.eval()
 
     # greedy_batch with TDT label-looping CUDA graphs fails on cuda-python 12.9
     # (NVRTC compilation not allowed inside graph capture context).
     # strategy='greedy' uses a different CUDA graph path that works fine.
-    model.change_decoding_strategy(decoding_cfg={'strategy': 'greedy'})
+    # model.change_decoding_strategy(decoding_cfg={'strategy': 'greedy'})
 
     def do_transcribe(wav_path, audio):
         out = model.transcribe([wav_path], batch_size=1)
