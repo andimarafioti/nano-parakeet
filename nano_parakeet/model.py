@@ -541,10 +541,11 @@ class ParakeetTDT(nn.Module):
         enc_dim  = self.joint.enc.in_features
         pred_dim = self.decoder.lstm.hidden_size
 
+        dtype = next(self.parameters()).dtype
         self._g_label = torch.full((1, 1), self.BLANK_ID, dtype=torch.long, device=device)
-        self._g_f     = torch.zeros(1, 1, enc_dim,  device=device)
-        self._g_h     = torch.zeros(self.decoder.lstm.num_layers, 1, pred_dim, device=device)
-        self._g_c     = torch.zeros(self.decoder.lstm.num_layers, 1, pred_dim, device=device)
+        self._g_f     = torch.zeros(1, 1, enc_dim,  dtype=dtype, device=device)
+        self._g_h     = torch.zeros(self.decoder.lstm.num_layers, 1, pred_dim, dtype=dtype, device=device)
+        self._g_c     = torch.zeros(self.decoder.lstm.num_layers, 1, pred_dim, dtype=dtype, device=device)
 
         for _ in range(3):
             emb = self.decoder.embed(self._g_label)
@@ -575,9 +576,8 @@ class ParakeetTDT(nn.Module):
         audio    = audio.to(device)
         features = self.preprocessor(audio)
         T        = features.shape[-1]
-        lengths  = torch.tensor([T], device=device, dtype=torch.long)
-        with torch.autocast(device_type=device.type, dtype=torch.float16):
-            enc_out, enc_lengths = self.encoder(features, lengths)
+        lengths  = torch.tensor([T], device=device, dtype=torch.long)        
+        enc_out, enc_lengths = self.encoder(features, lengths)
         enc_len     = int(enc_lengths[0])
         encoder_out = enc_out[0].float()
 
