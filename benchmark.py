@@ -5,6 +5,7 @@ import time
 import tempfile
 import numpy as np
 import soundfile as sf
+import torch
 
 
 def convert_to_wav16k_mono(path: str) -> str:
@@ -36,6 +37,8 @@ def main():
     parser.add_argument('--model', default='nvidia/parakeet-tdt-0.6b-v3')
     parser.add_argument('--runs', type=int, default=5,
                         help='number of timed runs (first is warm-up)')
+    parser.add_argument('--dtype', default=None, choices=['bfloat16', 'float16'],
+                        help='cast model to this dtype before benchmarking')
     args = parser.parse_args()
 
     wav_path = convert_to_wav16k_mono(args.audio)
@@ -56,6 +59,8 @@ def main():
 
     model = nemo_asr.models.EncDecRNNTBPEModel.from_pretrained(model_name=args.model)
     model = model.cuda()
+    if args.dtype:
+        model = model.to(getattr(torch, args.dtype))
     model.eval()
 
     # greedy_batch with TDT label-looping CUDA graphs fails on cuda-python 12.9

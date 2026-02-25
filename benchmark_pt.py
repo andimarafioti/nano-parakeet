@@ -18,6 +18,8 @@ def main():
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--runs', type=int, default=3,
                         help='number of timed runs (first is warm-up)')
+    parser.add_argument('--dtype', default=None, choices=['bfloat16', 'float16'],
+                        help='encoder/decoder dtype (default: float32 weights + fp16 autocast)')
     args = parser.parse_args()
 
     wav_path = convert_to_wav16k(args.audio)
@@ -25,7 +27,8 @@ def main():
     audio_t  = torch.from_numpy(audio_np)
     duration = len(audio_np) / 16_000
 
-    model = from_pretrained(args.model, device=args.device)
+    dtype = getattr(torch, args.dtype) if args.dtype else None
+    model = from_pretrained(args.model, device=args.device, dtype=dtype)
 
     # Warm-up (first inference loads CUDA kernels, etc.)
     print("Warming up…")
