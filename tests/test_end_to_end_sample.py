@@ -12,7 +12,7 @@ EXPECTED_SAMPLE_TRANSCRIPT = (
 
 
 def test_sample_wav_full_transcription_matches_expected_output():
-    sample_path = Path(__file__).resolve().parents[1] / "sample.wav"
+    sample_path = Path(__file__).with_name("sample.wav")
 
     model = from_pretrained(device="cpu")
     transcript = model.transcribe(str(sample_path))
